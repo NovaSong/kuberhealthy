@@ -1,10 +1,12 @@
-FROM golang:1.14 AS builder
+FROM golang:1.17 AS builder
 RUN groupadd -g 999 user && \
     useradd -r -u 999 -g user user
 COPY --chown=user:user . /build
+ENV GO111MODULE=on \
+    GOPROXY=https://goproxy.oneitfarm.com,https://goproxy.cn,direct \
+    CGO_ENABLED=0
 WORKDIR /build/cmd/ssl-expiry-check
-ENV CGO_ENABLED=0
-RUN go build -v
+RUN go build
 FROM scratch
 COPY --from=builder /etc/passwd /etc/passwd
 USER user

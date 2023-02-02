@@ -141,6 +141,19 @@ func (sec *Checker) runExpiry(ctx context.Context, cancel context.CancelFunc, cl
 
 func (sec *Checker) doChecks() error {
 	certExpired, expirePending, err := ssl_util.CertExpiry(domainName, portNum, daysToExpire, insecureBool)
+	// 第一次请求失败后再重试两次
+	if err != nil {
+		time.Sleep(time.Duration(5) * time.Second)
+		for i := 0; i < 2; i++ {
+			certExpired, expirePending, err = ssl_util.CertExpiry(domainName, portNum, daysToExpire, insecureBool)
+			if err == nil {
+				break
+			} else {
+				time.Sleep(time.Duration(5) * time.Second)
+			}
+		}
+	}
+
 	if err != nil {
 		log.Error("Unable to perform SSL expiration check")
 		return err
